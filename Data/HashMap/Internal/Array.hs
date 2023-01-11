@@ -211,11 +211,14 @@ new_ n = new n undefinedElem
 -- Otherwise a copy is made.
 shrink :: MArray s a -> Int -> ST s (MArray s a)
 #if __GLASGOW_HASKELL__ >= 810
-shrink mary _n@(I# n#) =
+shrink mary n@(I# n#) =
   CHECK_GT("shrink", _n, (0 :: Int))
   CHECK_LE("shrink", _n, (lengthM mary))
-  ST $ \s -> case Exts.shrinkSmallMutableArray# (unMArray mary) n# s of
-    s' -> (# s', mary #)
+  if lengthM mary == n then
+    pure mary
+  else
+    ST $ \s -> case Exts.shrinkSmallMutableArray# (unMArray mary) n# s of
+      s' -> (# s', mary #)
 #else
 shrink mary n = cloneM mary 0 n
 #endif 
